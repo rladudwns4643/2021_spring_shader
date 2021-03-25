@@ -21,6 +21,7 @@ public:
 	GLuint CreateBmpTexture(char * filePath);
 	   
 	void Test();
+	void Particle();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -28,7 +29,9 @@ private:
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
 	void CreateVertexBufferObjects(); 
+	void Renderer::CreateParticle(int count);
 	unsigned char * Renderer::loadBMPRaw(const char * imagepath, unsigned int& outWidth, unsigned int& outHeight);
+
 
 	bool m_Initialized = false;
 	
@@ -52,6 +55,9 @@ private:
 	GLuint m_SolidRectShader = 0;
 
 	GLuint m_VBO;
+	GLuint m_VBO1;
 
+	GLuint m_VBOManyParticle = 0;
+	int m_VBOManyParticleCount = 0;
 };
 
