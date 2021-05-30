@@ -23,6 +23,7 @@ public:
 	void Test();
 	void Particle();
 	void FSSandbox();
+	void FSGridMeshSandbox();
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
@@ -30,9 +31,9 @@ private:
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);
 	void CreateVertexBufferObjects(); 
-	void Renderer::CreateParticle(int count);
 	unsigned char * Renderer::loadBMPRaw(const char * imagepath, unsigned int& outWidth, unsigned int& outHeight);
-
+	void CreateParticle(int count);
+	void CreateGridGeometry();
 
 	bool m_Initialized = false;
 	
@@ -55,12 +56,16 @@ private:
 	GLuint m_VBORect = 0;
 	GLuint m_SolidRectShader = 0;
 	GLuint m_FSSandboxShader = 0;
+	GLuint m_VSGridMeshSandboxShader = 0;
 
 	GLuint m_VBO;
 	GLuint m_VBO1;
 	GLuint m_VBOManyParticle = 0;
 	int m_VBOManyParticleCount = 0;
 	GLuint m_VBOFSSandBox = 0;
+
+	GLuint m_VBO_GridGeo = 0;
+	unsigned m_Count_GridGeo = 0;
 
 	float g_Time = 0.f;
 };
