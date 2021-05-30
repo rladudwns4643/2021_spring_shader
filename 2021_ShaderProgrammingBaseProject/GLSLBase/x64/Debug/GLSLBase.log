@@ -1,3 +1,3 @@
 ﻿  Renderer.cpp
-C:\Users\t1sna\OneDrive\Project\2021_spring_shader\2021_ShaderProgrammingBaseProject\GLSLBase\Renderer.cpp(757,1): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
+C:\Users\t1sna\OneDrive\Project\2021_spring_shader\2021_ShaderProgrammingBaseProject\GLSLBase\Renderer.cpp(794,1): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
   GLSLBase.vcxproj -> C:\Users\t1sna\OneDrive\Project\2021_spring_shader\2021_ShaderProgrammingBaseProject\x64\Debug\GLSLBase.exe

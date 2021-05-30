@@ -30,6 +30,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_FSSandboxShader = CompileShaders("./Shaders/FSSandbox.vs", "./Shaders/FSSandbox.fs");
 	m_VSGridMeshSandboxShader = CompileShaders("./Shaders/VSGridMeshSandbox.vs", "./Shaders/VSGridMeshSandbox.fs");
+	m_SimpleTextureShader = CompileShaders("./Shaders/Texture.vs", "./Shaders/Texture.fs");
 
 	//Create VBOs
 	CreateVertexBufferObjects();
@@ -89,6 +90,19 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBOFSSandBox);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(tempVertices2), tempVertices2, GL_STATIC_DRAW);
 
+	//create test data
+	float tempVertices3[] = {
+		-sizeRect, -sizeRect, 0.f, 0.f, 0.f,		//pos 3, texure 3
+		-sizeRect,	sizeRect, 0.f, 0.f, 1.f,
+		 sizeRect,	sizeRect, 0.f, 1.f, 1.f,
+		-sizeRect, -sizeRect, 0.f, 0.f, 0.f,
+		 sizeRect,	sizeRect, 0.f, 1.f, 1.f,
+		 sizeRect, -sizeRect, 0.f, 1.f, 0.f};
+	glGenBuffers(1, &m_VBORect_PosTex);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect_PosTex);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(tempVertices3), tempVertices3, GL_STATIC_DRAW);
+	
+
 	//Create Particle
 	CreateParticle(particleCnt);
 
@@ -108,6 +122,29 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_VBORect);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(rect), rect, GL_STATIC_DRAW);
+}
+
+void Renderer::CreateTextures() {
+	static const GLulong checkerboard[] =
+	{
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+	0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+	0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF
+	};
+	glGenTextures(1, &m_TextureCheckerBoard);				// ID 생성
+	glBindTexture(GL_TEXTURE_2D, m_TextureCheckerBoard);	// 사용형태 등록(2D형태)
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerboard);		//GPU에 메모리가 잡히고, CPU->GPU로 메모리 복사가 이루어짐
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 }
 
 void Renderer::CreateParticle(int count) {
@@ -791,11 +828,29 @@ void Renderer::FSGridMeshSandbox()
 	GLuint attribPosLoc = glGetAttribLocation(shader, "a_Position");
 	glEnableVertexAttribArray(attribPosLoc);
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBO_GridGeo);
-	glVertexAttribPointer(attribPosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (GLvoid*)(0));
+	glVertexAttribPointer(attribPosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (GLvoid*)(sizeof(float) * 0));
 
 	GLuint uniformTimeLoc = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformTimeLoc, g_Time);
 	g_Time += (0.016f * 0.01f);
 
 	glDrawArrays(GL_LINES, 0, m_Count_GridGeo);
+}
+
+void Renderer::DrawSimpleTexture()
+{
+	GLuint shader = m_SimpleTextureShader;
+	glUseProgram(shader);
+
+	GLuint attribPosLoc = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect_PosTex);
+	glVertexAttribPointer(attribPosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 0));
+
+	GLuint attribTexPosLoc = glGetAttribLocation(shader, "a_TexPos");
+	glEnableVertexAttribArray(attribTexPosLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect_PosTex);
+	glVertexAttribPointer(attribTexPosLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
