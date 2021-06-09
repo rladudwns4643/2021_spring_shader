@@ -114,6 +114,9 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
 	//Create Texture
 	CreateTextures();
+	
+	//Create FBO
+	m_FBO_0 = CreateFBO(512, 512, &m_FBOTexture_0, &m_FBODepth_0);
 }
 
 void Renderer::CreateVertexBufferObjects()
@@ -884,6 +887,48 @@ GLuint Renderer::CreateBmpTexture(char* filePath)
 	return temp;
 }
 
+GLuint Renderer::CreateFBO(int sx, int sy, GLuint* tex, GLuint* depthTex)
+{
+	//Gen render target
+	GLuint tempTex = 0;
+	glGenTextures(1, &tempTex);
+	glBindTexture(GL_TEXTURE_2D, tempTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, sx, sy, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	*tex = tempTex;
+
+	//Gen depth texture
+	GLuint tempDepthTex = 0;
+	glGenTextures(1, &tempDepthTex);
+	glBindTexture(GL_TEXTURE_2D, tempDepthTex);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, sx, sy, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+	*depthTex = tempDepthTex;
+
+	GLuint tempFBO;
+	glGenFramebuffers(1, &tempFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, tempFBO);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tempTex, 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tempDepthTex, 0);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "Error while attach fbo. \n";
+		return 0;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return tempFBO;
+}
+
 void Renderer::Test()
 {
 	glUseProgram(m_SolidRectShader);
@@ -1014,6 +1059,12 @@ void Renderer::FSSandbox()
 
 void Renderer::FSGridMeshSandbox()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO_0);
+	glViewport(0, 0, 512, 512);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+
 	GLuint shader = m_VSGridMeshSandboxShader;
 	glUseProgram(shader);
 
@@ -1025,14 +1076,17 @@ void Renderer::FSGridMeshSandbox()
 	GLuint uniformTimeLoc = glGetUniformLocation(shader, "u_Time");
 	glUniform1f(uniformTimeLoc, g_Time);
 	g_Time += (0.016f * 0.01f);
-
 	glDrawArrays(GL_LINES, 0, m_Count_GridGeo);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_WindowSizeX, m_WindowSizeY);
 }
 
 int texIdx = 0;
 
 void Renderer::DrawSimpleTexture()
 {
+
 	GLuint shader = m_SimpleTextureShader;
 	glUseProgram(shader);
 
@@ -1051,7 +1105,8 @@ void Renderer::DrawSimpleTexture()
 	GLuint uniformTex =  glGetUniformLocation(shader, "u_TexSampler");
 	glUniform1i(uniformTex, 0);				//uniform을 통해 몇번째 texture을 부를지 정함 (밑의 Active와 순서는 상관없음)
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_TextureIDTotal);		//마지막으로 Active 된 GL_TEXTURE가 들어간다 (Active -> Bind)
+	//glBindTexture(GL_TEXTURE_2D, m_TextureIDTotal);		//마지막으로 Active 된 GL_TEXTURE가 들어간다 (Active -> Bind)
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_TextureID1);
 	glActiveTexture(GL_TEXTURE2);

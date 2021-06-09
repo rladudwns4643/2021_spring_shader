@@ -29,7 +29,7 @@ void RenderScene(void)
 	//g_Renderer->Test();
 	//g_Renderer->Particle();
 	//g_Renderer->FSSandbox();
-	//g_Renderer->FSGridMeshSandbox();
+	g_Renderer->FSGridMeshSandbox();
 	g_Renderer->DrawSimpleTexture();
 	glutSwapBuffers();
 }
