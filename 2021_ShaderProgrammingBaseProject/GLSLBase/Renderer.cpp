@@ -117,6 +117,15 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	
 	//Create FBO
 	m_FBO_0 = CreateFBO(512, 512, &m_FBOTexture_0, &m_FBODepth_0);
+
+	//Create FBO_P
+	m_FBO_P = CreateFBO(512, 512, &m_FBOTexture_P, &m_FBODepth_P);
+
+	//Create FBO_F
+	m_FBO_F = CreateFBO(512, 512, &m_FBOTexture_F, &m_FBODepth_F);
+
+	//Create FBO_G
+	m_FBO_G = CreateFBO(512, 512, &m_FBOTexture_G, &m_FBODepth_G);
 }
 
 void Renderer::CreateVertexBufferObjects()
@@ -962,6 +971,12 @@ void Renderer::Test()
 }
 
 void Renderer::Particle() {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO_P);
+	glViewport(0, 0, 512, 512);
+	glClearColor(0, 0, 0, 1);
+	glClearDepth(1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
 	GLuint shader = m_SolidRectShader;
 	glUseProgram(shader); //shader program
 
@@ -1014,7 +1029,11 @@ void Renderer::Particle() {
 
 	glDrawArrays(GL_TRIANGLES, 0, m_VBOManyParticleCount);
 	g_Time += (0.016f * 0.01f);
-	glDisableVertexAttribArray(VBOLocation);
+	//glDisableVertexAttribArray(VBOLocation);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_WindowSizeX, m_WindowSizeY);
+
 }
 
 float g_points[] = {
@@ -1032,6 +1051,12 @@ float g_points[] = {
 
 void Renderer::FSSandbox()
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO_F);
+	glViewport(0, 0, 512, 512);
+	glClearColor(0, 0, 0, 1);
+	glClearDepth(1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	GLuint shader = m_FSSandboxShader;
 	glUseProgram(shader);
 
@@ -1055,15 +1080,19 @@ void Renderer::FSSandbox()
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glDisable(GL_BLEND);
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, m_WindowSizeX, m_WindowSizeY);
 }
 
 void Renderer::FSGridMeshSandbox()
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO_0);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO_G);
 	glViewport(0, 0, 512, 512);
+	glClearColor(0, 0, 0, 1);
+	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
 
 	GLuint shader = m_VSGridMeshSandboxShader;
 	glUseProgram(shader);
@@ -1086,7 +1115,6 @@ int texIdx = 0;
 
 void Renderer::DrawSimpleTexture()
 {
-
 	GLuint shader = m_SimpleTextureShader;
 	glUseProgram(shader);
 
@@ -1103,14 +1131,15 @@ void Renderer::DrawSimpleTexture()
 	GLuint uniformStep = glGetUniformLocation(shader, "u_step");
 	glUniform1f(uniformStep, (float)texIdx);
 	GLuint uniformTex =  glGetUniformLocation(shader, "u_TexSampler");
-	glUniform1i(uniformTex, 0);				//uniform을 통해 몇번째 texture을 부를지 정함 (밑의 Active와 순서는 상관없음)
+	glUniform1i(uniformTex, 0);								//uniform을 통해 몇번째 texture을 부를지 정함 (밑의 Active와 순서는 상관없음)
 	glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_Texture_0);
 	//glBindTexture(GL_TEXTURE_2D, m_TextureIDTotal);		//마지막으로 Active 된 GL_TEXTURE가 들어간다 (Active -> Bind)
-	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_0);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_P);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_TextureID1);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_F);
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_TextureID2);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_G);
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, m_TextureID3);
 	glActiveTexture(GL_TEXTURE4);
@@ -1118,9 +1147,27 @@ void Renderer::DrawSimpleTexture()
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, m_TextureID5);
 
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_P);
+	glViewport(0, m_WindowSizeY / 2, m_WindowSizeX / 2, m_WindowSizeY / 2);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_F);
+	glViewport(m_WindowSizeX / 2, m_WindowSizeY / 2, m_WindowSizeX / 2, m_WindowSizeY / 2);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_G);
+	glViewport(0,0, m_WindowSizeX / 2, m_WindowSizeY / 2);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_FBOTexture_F);
+	glViewport(m_WindowSizeX / 2, 0, m_WindowSizeX / 2, m_WindowSizeY / 2);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	//텍스쳐 switch
-	texIdx++;
+	//texIdx++;
 	if (texIdx > 5) texIdx = 0;
 	//~텍스쳐 swtich
-	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
